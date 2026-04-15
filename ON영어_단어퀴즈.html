@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ON영어 천안 - 단어 퀴즈</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/responsivevoice/1.7.7/responsivevoice.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #1a3a6b, #2563eb); color: white; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { color: #fbbf24; }
+  .header .contact { font-size: 13px; opacity: 0.85; text-align: right; }
+
+  /* LESSON TABS */
+  .lesson-tabs { display: flex; gap: 0; background: #1e40af; padding: 0 24px; }
+  .lesson-tab { padding: 12px 28px; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 14px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .lesson-tab.active { color: #fbbf24; border-bottom-color: #fbbf24; }
+  .lesson-tab:hover { color: white; }
+
+  /* MODE TABS */
+  .mode-section { background: white; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; }
+  .mode-label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .mode-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mode-tab { padding: 8px 16px; border-radius: 20px; border: 1.5px solid #cbd5e1; color: #475569; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; background: white; }
+  .mode-tab.active { background: #2563eb; border-color: #2563eb; color: white; }
+  .mode-tab:hover:not(.active) { border-color: #2563eb; color: #2563eb; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { background: white; padding: 12px 24px; border-bottom: 1px solid #e2e8f0; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #2563eb, #06b6d4); border-radius: 3px; transition: width 0.4s; }
+
+  /* QUIZ AREA */
+  .quiz-area { max-width: 700px; margin: 24px auto; padding: 0 16px 40px; }
+
+  .quiz-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 32px; }
+
+  .q-type-badge { display: inline-block; background: #eff6ff; color: #2563eb; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  /* MODE 1: 영어→뜻 */
+  .word-display { text-align: center; margin: 24px 0; }
+  .word-eng { font-size: 42px; font-weight: 700; color: #1e293b; letter-spacing: -1px; }
+  .speak-btn { margin-top: 12px; background: none; border: none; cursor: pointer; font-size: 28px; transition: transform 0.2s; display: inline-block; }
+  .speak-btn:hover { transform: scale(1.2); }
+
+  /* MODE 2: 영영풀이→영어 */
+  .definition-box { background: #f8fafc; border-left: 4px solid #2563eb; border-radius: 8px; padding: 18px 20px; font-size: 16px; color: #334155; line-height: 1.7; margin: 20px 0; }
+
+  /* MODE 3: 뜻→영어 */
+  .meaning-display { text-align: center; margin: 20px 0; }
+  .meaning-kor { font-size: 28px; font-weight: 600; color: #1e293b; }
+  .meaning-sub { font-size: 15px; color: #94a3b8; margin-top: 6px; }
+
+  /* MODE 4: 예문 빈칸 */
+  .sentence-box { background: #f8fafc; border-radius: 10px; padding: 20px 24px; font-size: 17px; color: #1e293b; line-height: 1.9; margin: 20px 0; text-align: center; }
+  .blank { display: inline-block; min-width: 120px; border-bottom: 2.5px solid #2563eb; color: #2563eb; font-weight: 700; }
+  .hint-box { font-size: 13px; color: #64748b; text-align: center; margin-top: 8px; background: #f0f9ff; border-radius: 8px; padding: 10px; }
+
+  /* CHOICES */
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+  .choice-btn { padding: 14px 20px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; font-size: 15px; color: #334155; text-align: left; transition: all 0.15s; display: flex; align-items: center; gap: 12px; }
+  .choice-btn:hover:not(:disabled) { border-color: #2563eb; background: #eff6ff; }
+  .choice-btn .choice-num { width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .choice-btn.correct { border-color: #16a34a; background: #f0fdf4; }
+  .choice-btn.correct .choice-num { background: #16a34a; color: white; }
+  .choice-btn.wrong { border-color: #dc2626; background: #fef2f2; }
+  .choice-btn.wrong .choice-num { background: #dc2626; color: white; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* RESULT REVEAL */
+  .result-reveal { margin-top: 20px; padding: 16px 20px; border-radius: 10px; font-size: 14px; line-height: 1.8; display: none; }
+  .result-reveal.show { display: block; }
+  .result-reveal.correct-reveal { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .result-reveal.wrong-reveal { background: #fff7ed; border: 1px solid #fed7aa; }
+  .result-reveal .answer-word { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .result-reveal .answer-meaning { color: #64748b; }
+
+  /* NEXT BTN */
+  .next-btn { margin-top: 20px; width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; display: none; transition: background 0.2s; }
+  .next-btn:hover { background: #1d4ed8; }
+  .next-btn.show { display: block; }
+
+  /* SCORE */
+  .score-display { display: flex; gap: 12px; margin-top: 20px; }
+  .score-card { flex: 1; background: #f8fafc; border-radius: 10px; padding: 12px; text-align: center; }
+  .score-card .sc-num { font-size: 24px; font-weight: 700; }
+  .score-card .sc-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .score-card.sc-correct .sc-num { color: #16a34a; }
+  .score-card.sc-wrong .sc-num { color: #dc2626; }
+  .score-card.sc-total .sc-num { color: #2563eb; }
+
+  /* FINISH */
+  .finish-screen { text-align: center; padding: 40px 20px; }
+  .finish-emoji { font-size: 64px; margin-bottom: 16px; }
+  .finish-score { font-size: 48px; font-weight: 700; color: #1e293b; }
+  .finish-msg { font-size: 16px; color: #64748b; margin: 8px 0 24px; }
+  .restart-btn { padding: 14px 32px; background: #2563eb; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin: 8px; }
+  .restart-btn.outline { background: white; color: #2563eb; border: 1.5px solid #2563eb; }
+
+  @media (max-width: 480px) {
+    .word-eng { font-size: 32px; }
+    .quiz-card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>ON</span>영어 천안</h1>
+  <div class="contact">📞 041-414-1806<br>단어 퀴즈 시스템</div>
+</div>
+
+<div class="lesson-tabs">
+  <div class="lesson-tab active" onclick="selectLesson(1)">📘 Lesson 1 — A Life Full of Experiences</div>
+  <div class="lesson-tab" onclick="selectLesson(2)">📗 Lesson 2 — Take Care of Yourself</div>
+</div>
+
+<div class="mode-section">
+  <div class="mode-label">퀴즈 유형 선택</div>
+  <div class="mode-tabs">
+    <div class="mode-tab active" onclick="selectMode(1)">① 영어 → 뜻 🔊</div>
+    <div class="mode-tab" onclick="selectMode(2)">② 영영풀이 → 영어</div>
+    <div class="mode-tab" onclick="selectMode(3)">③ 뜻 → 영어</div>
+    <div class="mode-tab" onclick="selectMode(4)">④ 예문 빈칸</div>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-info">
+    <span id="prog-text">문제 1 / 23</span>
+    <div class="score-display" style="margin:0; gap:8px;">
+      <span style="color:#16a34a; font-weight:600;" id="hdr-correct">✓ 0</span>
+      <span style="color:#dc2626; font-weight:600;" id="hdr-wrong">✗ 0</span>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="quiz-area">
+  <div class="quiz-card" id="quiz-card">
+    <div id="quiz-content"></div>
+  </div>
+</div>
+
+<script>
+const LESSONS = {
+  1: [
+    { word: "volunteer", kor: "자원봉사자; 자원하다", def: "to work to help others without being paid", ex: "On her vacation, she ___ at a home for the elderly.", pos: "v/n" },
+    { word: "top", kor: "맨꼭대기, 윗면", def: "the highest point of something", ex: "Have you ever been to the ___ of the mountain?", pos: "n" },
+    { word: "confident", kor: "자신감 있는", def: "sure that one has the ability to do things well", ex: "The speech class made me ___.", pos: "adj" },
+    { word: "talent", kor: "재능", def: "a natural ability to do something well", ex: "My brother has a musical ___.", pos: "n" },
+    { word: "foreign", kor: "외국의, 타국의", def: "from another country", ex: "I'm interested in ___ cultures.", pos: "adj" },
+    { word: "requirement", kor: "필요조건, 자격요건", def: "a necessary characteristic, quality, or skill", ex: "Passing the exam is the ___ for graduation.", pos: "n" },
+    { word: "case", kor: "경우; 사례", def: "a particular situation", ex: "In this ___, you need to see a doctor.", pos: "n" },
+    { word: "improve", kor: "향상하다, 개선하다", def: "to make something better", ex: "I'm going to ___ my English and go to the US.", pos: "v" },
+    { word: "familiar", kor: "익숙한, 친숙한", def: "well-known; seen often in everyday life", ex: "I'm ___ with the story.", pos: "adj" },
+    { word: "vocabulary", kor: "어휘", def: "a list or collection of words", ex: "Jennie knows a lot of English ___.", pos: "n" },
+    { word: "memorize", kor: "암기하다", def: "to learn something in order to remember it exactly", ex: "The actor ___ his lines last night.", pos: "v" },
+    { word: "review", kor: "검토, 비평; 검토하다", def: "to examine something thoroughly", ex: "My sister wrote a book ___ on her blog.", pos: "v/n" },
+    { word: "match", kor: "경기, 시합", def: "a contest between two or more parties", ex: "I want to see the final ___ of the World Cup!", pos: "n" },
+    { word: "subtitle", kor: "자막", def: "written text shown that is a translation of a film's spoken dialogue", ex: "This movie is going to be released with Korean ___.", pos: "n" },
+    { word: "perform", kor: "공연하다, 실행하다", def: "to do something like sing or act to entertain people", ex: "The singer ___ well at his concert.", pos: "v" },
+    { word: "perfect", kor: "완벽한, 완전한", def: "the best; having no problems", ex: "It is ___ weather for walking a dog.", pos: "adj" },
+    { word: "motivate", kor: "동기 부여하다", def: "to provide with a reason to do something", ex: "The boss wants to ___ his team.", pos: "v" },
+    { word: "translate", kor: "번역하다, 옮기다", def: "to change words into another language", ex: "That essay was ___ into three languages.", pos: "v" },
+    { word: "social media", kor: "소셜 미디어", def: "websites and applications where users can create and share content or participate in social networking with other users", ex: "___ is a big part of our lives.", pos: "n" },
+    { word: "post", kor: "게시하다", def: "to put something online for other people to see", ex: "I ___ some pictures on my blog this morning.", pos: "v" },
+    { word: "recommend", kor: "추천하다", def: "to suggest something", ex: "The doctor ___ that I work out regularly.", pos: "v" },
+    { word: "mistake", kor: "실수", def: "something done the wrong way", ex: "I made a ___ on the exam.", pos: "n" },
+    { word: "get used to", kor: "~에 익숙해지다", def: "to be familiar with something through repeated experience", ex: "He is ___ this schedule.", pos: "phrase" },
+  ],
+  2: [
+    { word: "chew", kor: "씹다", def: "to crush food with your teeth, usually in order to swallow it", ex: "The meat was too tough to ___.", pos: "v" },
+    { word: "sensitive", kor: "민감한, 예민한", def: "easily damaged or affected, especially by a physical activity or effect", ex: "My teeth are very ___ to cold.", pos: "adj" },
+    { word: "productive", kor: "생산적인, 효율적인", def: "achieving, doing, or producing a lot", ex: "Studying is a ___ way of spending your time.", pos: "adj" },
+    { word: "compare", kor: "비교하다", def: "to look at the similarities and differences between things", ex: "I ___ the prices of several digital cameras online.", pos: "v" },
+    { word: "convenient", kor: "편리한, 간편한", def: "able to be used easily", ex: "A microwave is a ___ cooking device.", pos: "adj" },
+    { word: "beneficial", kor: "유익한, 이로운", def: "having a good or useful effect", ex: "Garlic is ___ to your health.", pos: "adj" },
+    { word: "diet", kor: "식습관, 식사", def: "the food that someone usually eats", ex: "It is important to have a healthy ___.", pos: "n" },
+    { word: "contain", kor: "포함하다", def: "to have something inside; to include", ex: "This drink doesn't ___ any sugar.", pos: "v" },
+    { word: "a variety of", kor: "여러 가지의", def: "many different kinds or types of something", ex: "People have ___ opinions about the issue.", pos: "phrase" },
+    { word: "clue", kor: "단서, 실마리", def: "information that helps you understand something", ex: "The police haven't found any ___ in the crime.", pos: "n" },
+    { word: "slice", kor: "(얇게) 썰다", def: "to cut something into thin, flat pieces", ex: "Be careful when you ___ the beef.", pos: "v" },
+    { word: "multiple", kor: "다수의, 다중의", def: "many; including more than one", ex: "Some problems have ___ solutions.", pos: "adj" },
+    { word: "hollow", kor: "텅빈, 속이 빈", def: "having an empty space inside", ex: "The tree is likely ___.", pos: "adj" },
+    { word: "chemical", kor: "화학물질; 화학의", def: "a substance used in chemistry", ex: "The students are learning how to mix ___.", pos: "n/adj" },
+    { word: "risk", kor: "위험, 위험성", def: "the possibility that something bad or dangerous may happen", ex: "Is there any ___ of developing lung cancer?", pos: "n" },
+    { word: "disease", kor: "질병, 병", def: "an illness that affects humans, animals, or plants", ex: "The boy has a skin ___.", pos: "n" },
+    { word: "active", kor: "활동적인, 능동적인", def: "busy or lively", ex: "My grandmother is enjoying an ___ life.", pos: "adj" },
+    { word: "prevent", kor: "예방하다, 막다", def: "to stop something from happening", ex: "Good training can help to ___ accidents.", pos: "v" },
+    { word: "vision", kor: "시력; 시야", def: "eyesight; ability to see", ex: "My eye doctor says I have good ___.", pos: "n" },
+    { word: "process", kor: "과정, 처리하다", def: "to make raw material, food, etc. ready to be used or sold", ex: "I'm interested in how language is ___ in the brain.", pos: "v/n" },
+    { word: "cell", kor: "세포, 칸", def: "the smallest functional unit of a living thing", ex: "Our body is made up of billions of ___.", pos: "n" },
+    { word: "ginger", kor: "생강", def: "a root with a strong taste which is used in cooking", ex: "Drinking hot ___ tea is good for colds.", pos: "n" },
+    { word: "come to mind", kor: "생각이 떠오르다", def: "to be thought of suddenly or immediately", ex: "His name did not ___ when I saw him at the party.", pos: "phrase" },
+    { word: "stomach", kor: "위, 배", def: "the part of your body where food goes to be broken down", ex: "I went to see a doctor because my ___ hurt.", pos: "n" },
+    { word: "throw up", kor: "구토하다", def: "to have the food in your stomach come out through your mouth because you are sick", ex: "I feel like ___ when I am in a moving car for too long.", pos: "phrase" },
+    { word: "mirror", kor: "반영하다, 거울", def: "to reflect something", ex: "His paintings ___ the culture of his country.", pos: "v/n" },
+  ]
+};
+
+let currentLesson = 1;
+let currentMode = 1;
+let quizList = [];
+let currentIndex = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let answered = false;
+
+function selectLesson(n) {
+  currentLesson = n;
+  document.querySelectorAll('.lesson-tab').forEach((t,i) => t.classList.toggle('active', i === n-1));
+  resetQuiz();
+}
+
+function selectMode(n) {
+  currentMode = n;
+  document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', i === n-1));
+  resetQuiz();
+}
+
+function resetQuiz() {
+  const words = [...LESSONS[currentLesson]];
+  quizList = shuffle(words);
+  currentIndex = 0; correctCount = 0; wrongCount = 0;
+  updateProgress();
+  renderQuestion();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function getDistractors(correct, all, count) {
+  const pool = all.filter(w => w.word !== correct.word);
+  return shuffle(pool).slice(0, count);
+}
+
+function updateProgress() {
+  const total = quizList.length;
+  const pct = total ? (currentIndex / total * 100).toFixed(0) : 0;
+  document.getElementById('prog-text').textContent = `문제 ${Math.min(currentIndex+1, total)} / ${total}`;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('hdr-correct').textContent = '✓ ' + correctCount;
+  document.getElementById('hdr-wrong').textContent = '✗ ' + wrongCount;
+}
+
+function speak(text) {
+  if (typeof responsiveVoice !== 'undefined') {
+    responsiveVoice.speak(text, "UK English Male", { rate: 0.9, pitch: 1 });
+  }
+}
+
+function renderQuestion() {
+  if (currentIndex >= quizList.length) { showFinish(); return; }
+  answered = false;
+  const q = quizList[currentIndex];
+  const all = LESSONS[currentLesson];
+  const distractors = getDistractors(q, all, 4);
+  updateProgress();
+
+  let html = '';
+
+  if (currentMode === 1) {
+    // 영어 → 뜻
+    const choices = shuffle([{word: q.kor, correct: true}, ...distractors.map(d => ({word: d.kor, correct: false}))]);
+    html = `
+      <div class="q-type-badge">영어 → 뜻</div>
+      <div class="word-display">
+        <div class="word-eng">${q.word}</div>
+        <button class="speak-btn" onclick="speak('${q.word.replace(/'/g,"\\'")}')">🔊</button>
+        <div style="font-size:13px;color:#94a3b8;margin-top:4px;">(${q.pos})</div>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;text-align:center;margin-bottom:8px;">뜻을 고르세요</div>
+      <div class="choices">
+        ${choices.map((c,i) => `<button class="choice-btn" onclick="handleAnswer(this,${c.correct},'${q.word.replace(/'/g,"\\'")}','${q.kor.replace(/'/g,"\\'")}','${q.def.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+          <span class="choice-num">${i+1}</span>${c.word}
+        </button>`).join('')}
+      </div>
+      <div class="result-reveal" id="result-reveal"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+    `;
+    setTimeout(() => speak(q.word), 400);
+
+  } else if (currentMode === 2) {
+    // 영영풀이 → 영어
+    const choices = shuffle([{word: q.word, correct: true}, ...distractors.map(d => ({word: d.word, correct: false}))]);
+    html = `
+      <div class="q-type-badge">영영풀이 → 영어단어</div>
+      <div class="definition-box">${q.def}</div>
+      <div style="font-size:13px;color:#94a3b8;text-align:center;margin-bottom:8px;">알맞은 영어 단어를 고르세요</div>
+      <div class="choices">
+        ${choices.map((c,i) => `<button class="choice-btn" onclick="handleAnswer(this,${c.correct},'${q.word.replace(/'/g,"\\'")}','${q.kor.replace(/'/g,"\\'")}','${q.def.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+          <span class="choice-num">${i+1}</span>${c.word}
+        </button>`).join('')}
+      </div>
+      <div class="result-reveal" id="result-reveal"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+    `;
+
+  } else if (currentMode === 3) {
+    // 뜻 → 영어
+    const choices = shuffle([{word: q.word, correct: true}, ...distractors.map(d => ({word: d.word, correct: false}))]);
+    html = `
+      <div class="q-type-badge">뜻 → 영어단어</div>
+      <div class="meaning-display">
+        <div class="meaning-kor">${q.kor}</div>
+        <div class="meaning-sub">(${q.pos})</div>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;text-align:center;margin-bottom:8px;">알맞은 영어 단어를 고르세요</div>
+      <div class="choices">
+        ${choices.map((c,i) => `<button class="choice-btn" onclick="handleAnswer(this,${c.correct},'${q.word.replace(/'/g,"\\'")}','${q.kor.replace(/'/g,"\\'")}','${q.def.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+          <span class="choice-num">${i+1}</span>${c.word}
+        </button>`).join('')}
+      </div>
+      <div class="result-reveal" id="result-reveal"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+    `;
+
+  } else if (currentMode === 4) {
+    // 예문 빈칸
+    const exSentence = q.ex.replace('___', '<span class="blank">_______</span>');
+    const choices = shuffle([{word: q.word, correct: true}, ...distractors.map(d => ({word: d.word, correct: false}))]);
+    html = `
+      <div class="q-type-badge">예문 빈칸 채우기</div>
+      <div class="sentence-box">${exSentence}</div>
+      <div class="hint-box">💡 힌트: ${q.def}</div>
+      <div style="font-size:13px;color:#94a3b8;text-align:center;margin:12px 0 8px;">빈칸에 알맞은 단어를 고르세요</div>
+      <div class="choices">
+        ${choices.map((c,i) => `<button class="choice-btn" onclick="handleAnswer(this,${c.correct},'${q.word.replace(/'/g,"\\'")}','${q.kor.replace(/'/g,"\\'")}','${q.def.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+          <span class="choice-num">${i+1}</span>${c.word}
+        </button>`).join('')}
+      </div>
+      <div class="result-reveal" id="result-reveal"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 →</button>
+    `;
+  }
+
+  document.getElementById('quiz-content').innerHTML = html;
+}
+
+function handleAnswer(btn, isCorrect, word, kor, def) {
+  if (answered) return;
+  answered = true;
+
+  const allBtns = document.querySelectorAll('.choice-btn');
+  allBtns.forEach(b => { b.disabled = true; });
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    correctCount++;
+  } else {
+    btn.classList.add('wrong');
+    wrongCount++;
+    allBtns.forEach(b => {
+      const handler = b.getAttribute('onclick');
+      if (handler && handler.includes(',true,')) b.classList.add('correct');
+    });
+  }
+
+  const reveal = document.getElementById('result-reveal');
+  const completeSentence = quizList[currentIndex].ex.replace('___', `<strong>${word}</strong>`);
+  reveal.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="font-size:20px;">${isCorrect ? '✅' : '❌'}</span>
+      <span class="answer-word">${word}</span>
+      <span style="font-size:16px;color:#94a3b8;">/ ${kor}</span>
+    </div>
+    <div style="font-size:13px;color:#475569;margin-bottom:6px;font-style:italic;">"${def}"</div>
+    <div style="font-size:14px;color:#334155;background:#fff;border-radius:8px;padding:8px 12px;margin-top:6px;">${completeSentence}</div>
+  `;
+  reveal.className = `result-reveal show ${isCorrect ? 'correct-reveal' : 'wrong-reveal'}`;
+
+  document.getElementById('next-btn').classList.add('show');
+  updateProgress();
+}
+
+function nextQuestion() {
+  currentIndex++;
+  renderQuestion();
+}
+
+function showFinish() {
+  const total = quizList.length;
+  const pct = Math.round(correctCount / total * 100);
+  let emoji = pct >= 90 ? '🏆' : pct >= 70 ? '😊' : pct >= 50 ? '🙂' : '💪';
+  let msg = pct >= 90 ? '완벽합니다! 단어 마스터!' : pct >= 70 ? '잘 했어요! 조금만 더!' : pct >= 50 ? '기초는 잡혔어요, 계속 연습!' : '다시 한번 도전해봐요!';
+
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="finish-screen">
+      <div class="finish-emoji">${emoji}</div>
+      <div class="finish-score">${correctCount} / ${total}</div>
+      <div style="font-size:28px;color:#2563eb;font-weight:700;">${pct}점</div>
+      <div class="finish-msg">${msg}</div>
+      <div class="score-display" style="max-width:300px;margin:0 auto 24px;">
+        <div class="score-card sc-correct"><div class="sc-num">${correctCount}</div><div class="sc-label">정답</div></div>
+        <div class="score-card sc-wrong"><div class="sc-num">${wrongCount}</div><div class="sc-label">오답</div></div>
+        <div class="score-card sc-total"><div class="sc-num">${total}</div><div class="sc-label">전체</div></div>
+      </div>
+      <button class="restart-btn" onclick="resetQuiz()">🔄 같은 레슨 다시</button>
+      <button class="restart-btn outline" onclick="selectLesson(${currentLesson===1?2:1})">📖 ${currentLesson===1?'Lesson 2':'Lesson 1'}으로</button>
+    </div>
+  `;
+  document.getElementById('prog-fill').style.width = '100%';
+}
+
+resetQuiz();
+</script>
+</body>
+</html>
